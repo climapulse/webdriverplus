@@ -3,6 +3,8 @@ from webdriverplus.webelementset import WebElementSet
 from webdriverplus.selectors import SelectorMixin
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.command import Command
 
 import re
 import tempfile
@@ -11,6 +13,8 @@ from selenium.common.exceptions import StaleElementReferenceException
 
 
 class WebDriverMixin(SelectorMixin):
+    _web_element_cls = WebElement
+
     def __init__(self, *args, **kwargs):
         self.reuse_browser = kwargs.pop('reuse_browser', False)
         self.quit_on_exit = kwargs.pop('quit_on_exit', False)
@@ -69,7 +73,7 @@ class WebDriverMixin(SelectorMixin):
     # Override the default behavior to return our own WebElement and
     # WebElements objects.
     def _is_web_element(self, value):
-        return isinstance(value, dict) and 'ELEMENT' in value
+        return isinstance(value, dict) and ('ELEMENT' in value or 'element-6066-11e4-a52e-4f735466cecf' in value)
 
     def _is_web_element_list(self, lst):
         return all(isinstance(value, WebElement) for value in lst)
@@ -82,7 +86,7 @@ class WebDriverMixin(SelectorMixin):
 
     def _unwrap_value(self, value):
         if self._is_web_element(value):
-            return self._create_web_element(value['ELEMENT'])
+            return self._create_web_element(value.get('ELEMENT') or value.get('element-6066-11e4-a52e-4f735466cecf'))
         elif isinstance(value, list):
             lst = [self._unwrap_value(item) for item in value]
             if self._is_web_element_list(lst):
@@ -98,7 +102,7 @@ class WebDriverMixin(SelectorMixin):
                 converted[key] = self._wrap_value(val)
             return converted
         elif isinstance(value, WebElement):
-            return {'ELEMENT': value._id}  # Use '._id', not '.id'
+            return {'ELEMENT': value._id, 'element-6066-11e4-a52e-4f735466cecf': value._id}  # Use '._id', not '.id'
         elif isinstance(value, list):
             return list(self._wrap_value(item) for item in value)
         else:
@@ -144,3 +148,25 @@ class WebDriverMixin(SelectorMixin):
 
     def __repr__(self):
         return '<WebDriver Instance, %s>' % (self.name)
+
+    def find_elements(self, by=By.ID, value=None):
+        """
+        Override to return WebElementSet if nothing found.
+        It seems like this is the best spot to do that, because just
+        checking for a list in _unwrap_value causes other issues.
+        """
+        if self.w3c:
+            if by == By.ID:
+                by = By.CSS_SELECTOR
+                value = '[id="%s"]' % value
+            elif by == By.TAG_NAME:
+                by = By.CSS_SELECTOR
+            elif by == By.CLASS_NAME:
+                by = By.CSS_SELECTOR
+                value = ".%s" % value
+            elif by == By.NAME:
+                by = By.CSS_SELECTOR
+                value = '[name="%s"]' % value
+        return self.execute(Command.FIND_ELEMENTS, {
+            'using': by,
+            'value': value})['value'] or WebElementSet(self, [])

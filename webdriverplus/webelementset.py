@@ -176,6 +176,9 @@ class WebElementSet(SelectorMixin, OrderedSet):
     def javascript(self, script):
         return [elem.javascript(script) for elem in self]
 
+    def jquery(self, script):
+        return [elem.jquery(script) for elem in self]
+
     def __repr__(self):
         ret = "WebElementSet(\n  %s\n)" % '\n  '.join([repr(elem) for elem in self])
         script = """for (var i = 0, j = arguments.length; i < j; i++) {

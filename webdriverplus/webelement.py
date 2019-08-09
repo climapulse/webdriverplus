@@ -321,13 +321,8 @@ class WebElement(SelectorMixin, _WebElement):
 
     def __repr__(self):
         try:
-            if os.isatty(sys.stdin.fileno()):
-                try:
-                    width = get_terminal_size()[0]
-                except:
-                    width = 80
-            else:
-                width = 80
+            # Simplify
+            width = 80
 
             ret = self.html
             ret = ' '.join(ret.split())

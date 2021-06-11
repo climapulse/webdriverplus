@@ -296,7 +296,7 @@ class WebElement(SelectorMixin, _WebElement):
 
     def select_option(self, value=None, text=None, index=None):
         # Python3 filter -> list(filter)
-        if len(list(filter(None, (value, text, index)))) != 1:
+        if len(list(filter(lambda x: x is not None, (value, text, index)))) != 1:
             raise ValueError("You must supply exactly one of (value, text, index) kwargs")
 
         select = Select(self)
@@ -308,7 +308,7 @@ class WebElement(SelectorMixin, _WebElement):
             select.select_by_index(index)
 
     def deselect_option(self, value=None, text=None, index=None):
-        if len(list(filter(None, (value, text, index)))) != 1:
+        if len(list(filter(lambda x: x is not None, (value, text, index)))) != 1:
             raise ValueError("You must supply exactly one of (value, text, index) kwargs")
 
         select = Select(self)

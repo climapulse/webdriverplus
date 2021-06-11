@@ -19,7 +19,7 @@ try:
 except ImportError:
     from urllib.error import URLError
 
-VERSION = (0, 2, 0)
+VERSION = (0, 3, 2)
 
 
 def get_version():
